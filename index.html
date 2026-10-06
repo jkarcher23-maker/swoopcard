@@ -125,7 +125,7 @@
       <div class="text-center mb-8">
         <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">2 to 8 Players · Multiplayer & AI</span>
         <h2 class="font-display text-3xl md:text-5xl font-black text-amber-300 text-shadow-gold tracking-tight">The Card Room</h2>
-        <p class="text-stone-400 text-sm md:text-base mt-2 max-w-lg mx-auto">Play matching or higher ranks, blind-flip mystery table cards at any time, clear piles with 10s & Jokers, and swoop your way to victory!</p>
+        <p class="text-stone-400 text-sm md:text-base mt-2 max-w-lg mx-auto">Play matching or lower ranks, blind-flip mystery table cards at any time, clear piles with 10s & Jokers, and swoop your way to victory!</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-8">
@@ -294,7 +294,7 @@
           
           <div class="flex items-center gap-1.5 sm:gap-2 mt-1">
             <span id="pileCountBadge" class="text-xs font-bold text-amber-400">0 cards</span>
-            <span id="pileRuleBadge" class="text-[9px] sm:text-[10px] px-1.5 py-0.2 bg-stone-800 border border-stone-700 text-stone-300 rounded">Equal or Higher</span>
+            <span id="pileRuleBadge" class="text-[9px] sm:text-[10px] px-1.5 py-0.2 bg-stone-800 border border-stone-700 text-stone-300 rounded">Equal or Lower</span>
           </div>
 
           <button id="btnPickUpPile" class="hidden mt-1 sm:mt-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white rounded-lg text-xs font-bold shadow-lg transition active:scale-95 border border-red-400/40">
@@ -368,7 +368,7 @@
       </div>
     </div>
 
-    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col overflow-hidden">
+    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex-col overflow-hidden">
       <div class="px-4 py-2.5 bg-stone-800/80 border-b border-stone-700 flex items-center justify-between">
         <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
           <i class="fa-solid fa-scroll"></i> Table Activity Log
@@ -407,7 +407,7 @@
         <div class="space-y-2">
           <h4 class="font-bold text-white text-sm">3. Rules of Play & Rank Hierarchy</h4>
           <p>Card ranking goes: <strong>Ace (1 pt, Lowest)</strong>, 2, 3, 4, 5, 6, 7, 8, 9, Jack, Queen, <strong>King (Highest)</strong>.</p>
-          <p><strong>The Golden Rule:</strong> You must play cards that are <strong>EQUAL TO OR HIGHER</strong> in rank than the top card of the center play pile. Multiple cards of the same rank can be played together.</p>
+          <p><strong>The Golden Rule:</strong> You must play cards that are <strong>EQUAL TO OR LOWER</strong> in rank than the top card of the center play pile. Multiple cards of the same rank can be played together.</p>
         </div>
         <div class="space-y-2 bg-amber-500/10 p-3 rounded-xl border border-amber-500/30">
           <h4 class="font-bold text-amber-400 text-sm">4. The SWOOP Special Powers!</h4>
@@ -418,7 +418,7 @@
         </div>
         <div class="space-y-2">
           <h4 class="font-bold text-white text-sm">5. Picking Up the Pile</h4>
-          <p>If you cannot play an equal or higher card (and have no 10 or Joker), you must pick up the entire play pile into your hand.</p>
+          <p>If you cannot play an equal or lower card (and have no 10 or Joker), you must pick up the entire play pile into your hand.</p>
         </div>
       </div>
     </div>
@@ -584,7 +584,7 @@
       { id: 'C', symbol: '♣', name: 'clubs', color: 'text-stone-900' }
     ];
 
-    // ACE IS ALWAYS 1 (val: 1, points: 1)
+    // Ace = 1 (lowest card, 1 pt). King = 13 (highest regular card). 10 = Swoop.
     const RANKS = [
       { val: 1, label: 'A', points: 1 },
       { val: 2, label: '2', points: 2 },
@@ -780,8 +780,8 @@
           if (card) {
             player.tableMystery[action.slotIndex] = null;
             const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
-            // Equal or HIGHER (Ace=1 is lowest, King=13 is highest)
-            const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue >= topCard.rankValue);
+            // RULE: Must be equal or LOWER, or a Swoop (10/Joker)
+            const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue <= topCard.rankValue);
             if (isValid) {
               executePlayCards(player, [card]);
             } else {
@@ -790,7 +790,7 @@
               const count = gameState.playPile.length;
               player.hand.push(...gameState.playPile);
               gameState.playPile = [];
-              addLogEntry(`💥 BUST! ${player.name} blind-flipped ${card.rankLabel} (lower than ${topCard.rankLabel}) and picked up ${count} cards!`);
+              addLogEntry(`💥 BUST! ${player.name} blind-flipped ${card.rankLabel} (higher than ${topCard.rankLabel}) and picked up ${count} cards!`);
               showToast(`Bust! Picked up ${count} cards!`, 'fa-hand-holding-hand');
               advanceTurn();
             }
@@ -986,7 +986,8 @@
         cardElem.classList.add('shadow-2xl');
         elActivePileCardArea.appendChild(cardElem);
 
-        elPileRuleBadge.innerText = topCard.isJoker ? 'Joker Played (Any Rank)' : `Equal or ≥ ${topCard.rankLabel}`;
+        // RULE DISPLAY: Equal or Lower
+        elPileRuleBadge.innerText = topCard.isJoker ? 'Joker Played (Any Rank)' : `Equal or ≤ ${topCard.rankLabel}`;
 
         const currentPlayer = gameState.players[gameState.turnIndex];
         const isMyTurn = currentPlayer && currentPlayer.id === localUserId;
@@ -1210,7 +1211,7 @@
       renderLocalPlayerCards();
     }
 
-    // EQUAL OR HIGHER
+    // RULE: Selected cards must be EQUAL TO OR LOWER than the top card
     function isValidUnifiedSelection() {
       if (selectedCardsMap.size === 0) return false;
       const selections = Array.from(selectedCardsMap.values());
@@ -1220,7 +1221,7 @@
 
       const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
       if (!topCard || firstCard.isSwoop || topCard.isJoker) return true;
-      return rankVal >= topCard.rankValue;
+      return rankVal <= topCard.rankValue;
     }
 
     function executeUnifiedSelectedPlay() {
@@ -1260,7 +1261,7 @@
 
         if (checkPlayerWinCondition(player)) return;
         
-        // Critical fix: reset AI flag so bot can take their bonus turn!
+        // Reset processing flag so the bot or player can execute their bonus turn immediately
         isAiTurnProcessing = false;
         updateEntireUI();
         broadcastState();
@@ -1358,22 +1359,23 @@
       }, delay);
     }
 
-    // AI targets equal or higher, plays lowest available card
+    // AI targets equal or lower, plays highest possible valid card to preserve small cards (Aces/2s)
     function executeAiTurn(bot) {
       if (gameState.status !== 'playing') return;
       const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
       const handCards = bot.hand || [];
       const faceUpSlots = (bot.tableFaceUp || []).map((card, idx) => ({ card, idx })).filter(item => item.card !== null);
       
-      const validFaceUp = faceUpSlots.filter(item => !topCard || item.card.isSwoop || topCard.isJoker || item.card.rankValue >= topCard.rankValue);
+      const validFaceUp = faceUpSlots.filter(item => !topCard || item.card.isSwoop || topCard.isJoker || item.card.rankValue <= topCard.rankValue);
 
       const groups = {};
       handCards.forEach(c => {
         if (!groups[c.rankValue]) groups[c.rankValue] = [];
         groups[c.rankValue].push(c);
       });
-      const validHandRanks = Object.keys(groups).map(Number).filter(rv => !topCard || groups[rv][0].isSwoop || topCard.isJoker || rv >= topCard.rankValue);
+      const validHandRanks = Object.keys(groups).map(Number).filter(rv => !topCard || groups[rv][0].isSwoop || topCard.isJoker || rv <= topCard.rankValue);
 
+      // A. Match face-up table card with hand
       if (validFaceUp.length > 0) {
         for (const fu of validFaceUp) {
           const matchingHand = handCards.filter(c => c.rankValue === fu.card.rankValue);
@@ -1386,34 +1388,38 @@
         }
         const nonSwoopFaceUp = validFaceUp.filter(f => !f.card.isSwoop);
         if (nonSwoopFaceUp.length > 0) {
-          nonSwoopFaceUp.sort((a, b) => a.card.rankValue - b.card.rankValue);
+          // Play the highest valid face-up card
+          nonSwoopFaceUp.sort((a, b) => b.card.rankValue - a.card.rankValue);
           const chosen = nonSwoopFaceUp[0];
           bot.tableFaceUp[chosen.idx] = null;
           return executePlayCards(bot, [chosen.card]);
         }
       }
 
+      // B. Play valid hand ranks (highest rank first)
       if (validHandRanks.length > 0) {
         const nonSwoopRanks = validHandRanks.filter(rv => rv !== 10 && rv !== 99);
-        let chosenRank = nonSwoopRanks.length > 0 ? nonSwoopRanks.sort((a, b) => a - b)[0] : validHandRanks[0];
+        let chosenRank = nonSwoopRanks.length > 0 ? nonSwoopRanks.sort((a, b) => b - a)[0] : validHandRanks[0];
         const cardsToPlay = groups[chosenRank];
         const idsToRemove = new Set(cardsToPlay.map(c => c.id));
         bot.hand = bot.hand.filter(c => !idsToRemove.has(c.id));
         return executePlayCards(bot, cardsToPlay);
       }
 
+      // C. Play face-up swoop if no standard play
       if (validFaceUp.length > 0) {
         const chosen = validFaceUp[0];
         bot.tableFaceUp[chosen.idx] = null;
         return executePlayCards(bot, [chosen.card]);
       }
 
+      // D. Blind flip mystery card if pile is small
       const mysteryIndices = (bot.tableMystery || []).map((c, i) => c ? i : null).filter(i => i !== null);
       if (mysteryIndices.length > 0 && gameState.playPile.length <= 4) {
         const randomSlot = mysteryIndices[Math.floor(Math.random() * mysteryIndices.length)];
         const card = bot.tableMystery[randomSlot];
         bot.tableMystery[randomSlot] = null;
-        const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue >= topCard.rankValue);
+        const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue <= topCard.rankValue);
         if (isValid) {
           executePlayCards(bot, [card]);
         } else {
@@ -1428,6 +1434,7 @@
         return;
       }
 
+      // E. Pick up pile
       executePickUpPile(bot);
     }
 

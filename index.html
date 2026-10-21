@@ -384,7 +384,7 @@
       </div>
     </div>
 
-    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col overflow-hidden">
+    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex-col overflow-hidden">
       <div class="px-4 py-2.5 bg-stone-800/80 border-b border-stone-700 flex items-center justify-between">
         <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
           <i class="fa-solid fa-scroll"></i> Table Activity Log
@@ -504,10 +504,14 @@
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (AudioContext) this.ctx = new AudioContext();
         }
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume().catch(() => {});
+        }
       }
       playCard() {
-        if (!this.enabled || !this.ctx) return;
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -523,7 +527,9 @@
         } catch(e){}
       }
       playSwoop() {
-        if (!this.enabled || !this.ctx) return;
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
           const now = this.ctx.currentTime;
           [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
@@ -541,7 +547,9 @@
         } catch(e){}
       }
       playPickup() {
-        if (!this.enabled || !this.ctx) return;
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -557,7 +565,9 @@
         } catch(e){}
       }
       playShuffle() {
-        if (!this.enabled || !this.ctx) return;
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
           const now = this.ctx.currentTime;
           [280, 360, 440, 520].forEach((freq, idx) => {
@@ -575,7 +585,9 @@
         } catch(e){}
       }
       playWin() {
-        if (!this.enabled || !this.ctx) return;
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
           [440, 554, 659, 880].forEach((f, idx) => {
             const osc = this.ctx.createOscillator();
@@ -593,6 +605,10 @@
       }
     }
     const audio = new SoundEngine();
+
+    // Universal unlock for audio autoplay on first interaction
+    window.addEventListener('pointerdown', () => audio.init(), { once: true });
+    window.addEventListener('keydown', () => audio.init(), { once: true });
 
     const SUITS = [
       { id: 'S', symbol: '♠', name: 'spades', color: 'text-stone-900' },
@@ -761,6 +777,7 @@
     }
 
     function renderLogUI() {
+      if (!elLogList) return;
       elLogList.innerHTML = gameState.activityLog.map(item => `
         <div class="border-b border-stone-800/80 pb-1">${item}</div>
       `).join('');
@@ -773,6 +790,28 @@
           conn.send({ type: 'STATE_UPDATE', state: gameState });
         }
       });
+    }
+
+    function broadcastEvent(soundType, toastMsg = null, toastIcon = 'fa-circle-info') {
+      if (soundType === 'swoop') audio.playSwoop();
+      else if (soundType === 'pickup') audio.playPickup();
+      else if (soundType === 'card') audio.playCard();
+      else if (soundType === 'win') audio.playWin();
+
+      if (toastMsg) showToast(toastMsg, toastIcon);
+
+      if (isHost) {
+        connections.forEach(conn => {
+          if (conn.open) {
+            conn.send({
+              type: 'GAME_EVENT',
+              sound: soundType,
+              toast: toastMsg,
+              icon: toastIcon
+            });
+          }
+        });
+      }
     }
 
     function sendToHost(action) {
@@ -804,18 +843,16 @@
           if (card) {
             player.tableMystery[action.slotIndex] = null;
             const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
-            // RULE: Equal or LOWER (or 10/Joker)
             const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue <= topCard.rankValue);
             if (isValid) {
               executePlayCards(player, [card]);
             } else {
-              audio.playPickup();
               gameState.playPile.push(card);
               const count = gameState.playPile.length;
               player.hand.push(...gameState.playPile);
               gameState.playPile = [];
               addLogEntry(`💥 BUST! ${player.name} blind-flipped ${card.rankLabel} (higher than ${topCard.rankLabel}) and picked up ${count} cards!`);
-              showToast(`Bust! Picked up ${count} cards!`, 'fa-hand-holding-hand');
+              broadcastEvent('pickup', `Bust! ${player.name} picked up ${count} cards!`, 'fa-hand-holding-hand');
               advanceTurn();
             }
           }
@@ -919,7 +956,7 @@
 
       renderLobbySeats();
       broadcastState();
-      showToast(`Added ${chosenName} to table!`, 'fa-robot');
+      broadcastEvent(null, `Added ${chosenName} to table!`, 'fa-robot');
     }
 
     function removePlayerAt(index) {
@@ -928,7 +965,7 @@
         const removed = gameState.players.splice(index, 1)[0];
         renderLobbySeats();
         broadcastState();
-        showToast(`Removed ${removed.name}`, 'fa-user-xmark');
+        broadcastEvent(null, `Removed ${removed.name}`, 'fa-user-xmark');
       }
     }
 
@@ -957,7 +994,7 @@
       gameState.status = 'playing';
 
       addLogEntry(`Round ${gameState.roundNumber} dealt! First turn: ${gameState.players[gameState.turnIndex].name}`);
-      showToast(`Round ${gameState.roundNumber} Dealt! Let's Swoop!`, 'fa-crown');
+      broadcastEvent('card', `Round ${gameState.roundNumber} Dealt! Let's Swoop!`, 'fa-crown');
 
       updateEntireUI();
       broadcastState();
@@ -990,8 +1027,8 @@
       renderLocalPlayerCards();
       renderTurnIndicator();
       renderScoreboard();
+      renderLogUI(); // Ensures real-time table log updates for both host and guest
 
-      // Broadcasted Scoreboard Handling for All Users
       if (gameState.status === 'round_ended' || gameState.status === 'game_over') {
         elScoresModal.classList.remove('hidden');
         elRoundSummaryBlock.classList.remove('hidden');
@@ -1002,7 +1039,6 @@
       }
     }
 
-    // Displays the active pile and counts consecutive matching ranks on top
     function renderCenterPile() {
       const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
       elActivePileCardArea.innerHTML = '';
@@ -1017,7 +1053,6 @@
         elEmptyPileIndicator.classList.add('hidden');
         elPileCountBadge.innerText = `${gameState.playPile.length} cards`;
 
-        // Calculate consecutive matching cards of the exact same rank from top
         let consecutiveMatchCount = 0;
         for (let i = gameState.playPile.length - 1; i >= 0; i--) {
           if (gameState.playPile[i].rankValue === topCard.rankValue && !gameState.playPile[i].isJoker) {
@@ -1030,7 +1065,6 @@
         const cardElem = createCardDOM(topCard, false, false);
         cardElem.classList.add('shadow-2xl');
 
-        // Badge showing how many duplicate ranks are stacked on top
         if (consecutiveMatchCount > 1) {
           const matchBadge = document.createElement('div');
           matchBadge.className = 'absolute -top-2.5 -right-2.5 z-40 bg-amber-400 text-stone-950 text-[11px] font-black px-2 py-0.5 rounded-full border border-stone-900 shadow-glow-gold flex items-center gap-1';
@@ -1040,7 +1074,6 @@
 
         elActivePileCardArea.appendChild(cardElem);
 
-        // Pile rule label with count indication
         if (topCard.isJoker) {
           elPileRuleBadge.innerText = 'Joker Played (Any Rank)';
         } else if (consecutiveMatchCount > 1) {
@@ -1271,7 +1304,6 @@
       renderLocalPlayerCards();
     }
 
-    // RULE: Selected cards must be EQUAL TO OR LOWER than the top card
     function isValidUnifiedSelection() {
       if (selectedCardsMap.size === 0) return false;
       const selections = Array.from(selectedCardsMap.values());
@@ -1299,8 +1331,6 @@
     }
 
     function executePlayCards(player, cardsToPlay) {
-      audio.init();
-      audio.playCard();
       gameState.playPile.push(...cardsToPlay);
       const topPlayed = cardsToPlay[0];
 
@@ -1312,16 +1342,15 @@
       }
 
       if (topPlayed.isSwoop || causedFourOfAKind) {
-        audio.playSwoop();
         gameState.swoopedCardsCount += gameState.playPile.length;
         gameState.playPile = [];
         const swoopReason = causedFourOfAKind ? `4-of-a-kind ${topPlayed.rankLabel}s` : (topPlayed.isJoker ? 'a Joker' : 'a 10');
         addLogEntry(`🔥 SWOOP! ${player.name} cleared the pile with ${swoopReason} and takes another turn!`);
-        showToast(`SWOOP! ${player.name} cleared the pile! Bonus Turn!`, 'fa-fire-flame-curved');
+        
+        broadcastEvent('swoop', `SWOOP! ${player.name} cleared the pile! Bonus Turn!`, 'fa-fire-flame-curved');
 
         if (checkPlayerWinCondition(player)) return;
         
-        // Reset processing flag so the bot or player can execute their bonus turn immediately
         isAiTurnProcessing = false;
         updateEntireUI();
         broadcastState();
@@ -1329,6 +1358,7 @@
         return;
       }
 
+      broadcastEvent('card');
       addLogEntry(`${player.name} played ${cardsToPlay.length}x ${topPlayed.rankLabel} ${topPlayed.suitSymbol || ''}`);
       if (checkPlayerWinCondition(player)) return;
       advanceTurn();
@@ -1336,15 +1366,13 @@
 
     function executePickUpPile(player) {
       if (gameState.playPile.length === 0) return;
-      audio.init();
-      audio.playPickup();
 
       const count = gameState.playPile.length;
       player.hand.push(...gameState.playPile);
       gameState.playPile = [];
 
       addLogEntry(`${player.name} could not play and picked up the pile (${count} cards).`);
-      showToast(`${player.name} picked up ${count} cards`, 'fa-hand-holding-hand');
+      broadcastEvent('pickup', `${player.name} picked up ${count} cards`, 'fa-hand-holding-hand');
       advanceTurn();
     }
 
@@ -1363,7 +1391,6 @@
       const hasMystery = player.tableMystery && player.tableMystery.some(Boolean);
 
       if (!hasHand && !hasFaceUp && !hasMystery) {
-        audio.playWin();
         player.roundsWon = (player.roundsWon || 0) + 1;
         gameState.status = 'round_ended';
 
@@ -1387,6 +1414,7 @@
           gameState.status = 'game_over';
         }
 
+        broadcastEvent('win', `Round Ended! ${player.name} won!`, 'fa-trophy');
         updateEntireUI();
         broadcastState();
         return true;
@@ -1394,7 +1422,6 @@
       return false;
     }
 
-    // Renders scoreboard modal with Host controls vs Guest waiting state
     function renderScoreboardEndState() {
       const amHost = gameState.hostId === localUserId;
 
@@ -1434,7 +1461,6 @@
       }, delay);
     }
 
-    // AI targets equal or lower, plays highest possible valid card to preserve small cards (Aces/2s)
     function executeAiTurn(bot) {
       if (gameState.status !== 'playing') return;
       const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
@@ -1450,7 +1476,6 @@
       });
       const validHandRanks = Object.keys(groups).map(Number).filter(rv => !topCard || groups[rv][0].isSwoop || topCard.isJoker || rv <= topCard.rankValue);
 
-      // A. Match face-up table card with hand
       if (validFaceUp.length > 0) {
         for (const fu of validFaceUp) {
           const matchingHand = handCards.filter(c => c.rankValue === fu.card.rankValue);
@@ -1463,7 +1488,6 @@
         }
         const nonSwoopFaceUp = validFaceUp.filter(f => !f.card.isSwoop);
         if (nonSwoopFaceUp.length > 0) {
-          // Play the highest valid face-up card
           nonSwoopFaceUp.sort((a, b) => b.card.rankValue - a.card.rankValue);
           const chosen = nonSwoopFaceUp[0];
           bot.tableFaceUp[chosen.idx] = null;
@@ -1471,7 +1495,6 @@
         }
       }
 
-      // B. Play valid hand ranks (highest rank first)
       if (validHandRanks.length > 0) {
         const nonSwoopRanks = validHandRanks.filter(rv => rv !== 10 && rv !== 99);
         let chosenRank = nonSwoopRanks.length > 0 ? nonSwoopRanks.sort((a, b) => b - a)[0] : validHandRanks[0];
@@ -1481,14 +1504,12 @@
         return executePlayCards(bot, cardsToPlay);
       }
 
-      // C. Play face-up swoop if no standard play
       if (validFaceUp.length > 0) {
         const chosen = validFaceUp[0];
         bot.tableFaceUp[chosen.idx] = null;
         return executePlayCards(bot, [chosen.card]);
       }
 
-      // D. Blind flip mystery card if pile is small
       const mysteryIndices = (bot.tableMystery || []).map((c, i) => c ? i : null).filter(i => i !== null);
       if (mysteryIndices.length > 0 && gameState.playPile.length <= 4) {
         const randomSlot = mysteryIndices[Math.floor(Math.random() * mysteryIndices.length)];
@@ -1498,18 +1519,17 @@
         if (isValid) {
           executePlayCards(bot, [card]);
         } else {
-          audio.playPickup();
           gameState.playPile.push(card);
           const count = gameState.playPile.length;
           bot.hand.push(...gameState.playPile);
           gameState.playPile = [];
           addLogEntry(`💥 ${bot.name} blindly flipped ${card.rankLabel} and picked up ${count} cards!`);
+          broadcastEvent('pickup', `Bust! ${bot.name} picked up ${count} cards!`, 'fa-hand-holding-hand');
           advanceTurn();
         }
         return;
       }
 
-      // E. Pick up pile
       executePickUpPile(bot);
     }
 
@@ -1534,7 +1554,6 @@
       const local = gameState.players.find(p => p.id === localUserId);
       if (!local || !local.hand || local.hand.length === 0) return;
       if (playAudioEffect) {
-        audio.init();
         audio.playShuffle();
       }
       const isAscending = sortPreferences.rankDirection === 'asc';
@@ -1639,7 +1658,7 @@
             conn.send({ type: 'JOIN_ACCEPTED', state: gameState });
             renderLobbySeats();
             broadcastState();
-            showToast(`${data.player.name} joined!`, 'fa-user-check');
+            broadcastEvent('card', `${data.player.name} joined!`, 'fa-user-check');
           } else if (data.type === 'PLAYER_ACTION') {
             handleAction(data.action);
           }
@@ -1693,6 +1712,15 @@
             isHost = false;
             updateEntireUI();
             if (sortPreferences.autoSort) applyHandSorting(false);
+          } else if (data.type === 'GAME_EVENT') {
+            // Received real-time audio and toast from host
+            audio.init();
+            if (data.sound === 'swoop') audio.playSwoop();
+            else if (data.sound === 'pickup') audio.playPickup();
+            else if (data.sound === 'card') audio.playCard();
+            else if (data.sound === 'win') audio.playWin();
+
+            if (data.toast) showToast(data.toast, data.icon);
           } else if (data.type === 'JOIN_REJECT') {
             showToast(`Could not join: ${data.reason}`, 'fa-triangle-exclamation');
           }
@@ -1801,7 +1829,11 @@
       elScoresModal.classList.remove('hidden');
     });
     document.getElementById('btnCloseScores').addEventListener('click', () => elScoresModal.classList.add('hidden'));
-    document.getElementById('btnToggleLog').addEventListener('click', () => elActivityDrawer.classList.toggle('hidden'));
+    
+    document.getElementById('btnToggleLog').addEventListener('click', () => {
+      renderLogUI();
+      elActivityDrawer.classList.toggle('hidden');
+    });
     document.getElementById('btnCloseLog').addEventListener('click', () => elActivityDrawer.classList.add('hidden'));
 
     elBtnNextRound.addEventListener('click', () => {

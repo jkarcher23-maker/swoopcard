@@ -277,38 +277,54 @@
 
       <div id="opponentsLayout" class="relative z-10 w-full flex-1 max-h-[44%] p-2 sm:p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 overflow-y-auto pointer-events-auto"></div>
 
-      <div class="relative z-15 flex items-center justify-center py-1 sm:py-2 px-4 gap-4 sm:gap-10 my-auto">
-        <div class="flex flex-col items-center">
-          <div class="w-14 h-20 sm:w-20 sm:h-28 rounded-lg card-pattern-back border-2 border-stone-800 shadow-xl flex items-center justify-center relative cursor-default">
-            <span id="drawDeckCount" class="text-xs font-bold bg-black/75 px-2 py-0.5 rounded text-amber-300">--</span>
+      <!-- Center Arena -->
+      <div class="relative z-15 flex flex-col items-center justify-center py-1 sm:py-2 px-4 my-auto">
+        
+        <!-- Toast Notification positioned above the Play / Discard Pile -->
+        <div id="toastNotification" class="mb-3 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2 z-30">
+          <div id="toastInner" class="bg-stone-900/95 border border-amber-400/80 shadow-glow-gold px-4 py-2 rounded-full text-xs font-black text-amber-300 flex items-center gap-2 backdrop-blur-md">
+            <i id="toastIcon" class="fa-solid fa-circle-info"></i>
+            <span id="toastMsg">Notification</span>
           </div>
-          <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-stone-400 mt-1">Deck</span>
         </div>
 
-        <div class="flex flex-col items-center relative">
-          <div id="activePileCardArea" class="w-16 h-24 sm:w-24 sm:h-34 rounded-xl border-2 border-dashed border-amber-400/40 bg-stone-900/60 shadow-2xl flex items-center justify-center relative transition-all duration-300">
-            <div id="emptyPileIndicator" class="text-[11px] font-semibold text-stone-400 text-center px-2">
-              Empty Pile<br><span class="text-[9px] text-amber-400">Play any rank</span>
+        <div class="flex items-center justify-center gap-4 sm:gap-10">
+          <!-- Draw Deck -->
+          <div class="flex flex-col items-center">
+            <div class="w-14 h-20 sm:w-20 sm:h-28 rounded-lg card-pattern-back border-2 border-stone-800 shadow-xl flex items-center justify-center relative cursor-default">
+              <span id="drawDeckCount" class="text-xs font-bold bg-black/75 px-2 py-0.5 rounded text-amber-300">--</span>
             </div>
-          </div>
-          
-          <div class="flex items-center gap-1.5 sm:gap-2 mt-1">
-            <span id="pileCountBadge" class="text-xs font-bold text-amber-400">0 cards</span>
-            <span id="pileRuleBadge" class="text-[9px] sm:text-[10px] px-1.5 py-0.2 bg-stone-800 border border-stone-700 text-stone-300 rounded">Equal or Lower</span>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-stone-400 mt-1">Deck</span>
           </div>
 
-          <button id="btnPickUpPile" class="hidden mt-1 sm:mt-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white rounded-lg text-xs font-bold shadow-lg transition active:scale-95 border border-red-400/40">
-            <i class="fa-solid fa-hand-holding-hand mr-1"></i> Pick Up Pile
-          </button>
+          <!-- Center Active Play Pile -->
+          <div class="flex flex-col items-center relative">
+            <div id="activePileCardArea" class="w-16 h-24 sm:w-24 sm:h-34 rounded-xl border-2 border-dashed border-amber-400/40 bg-stone-900/60 shadow-2xl flex items-center justify-center relative transition-all duration-300">
+              <div id="emptyPileIndicator" class="text-[11px] font-semibold text-stone-400 text-center px-2">
+                Empty Pile<br><span class="text-[9px] text-amber-400">Play any rank</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5 sm:gap-2 mt-1">
+              <span id="pileCountBadge" class="text-xs font-bold text-amber-400">0 cards</span>
+              <span id="pileRuleBadge" class="text-[9px] sm:text-[10px] px-1.5 py-0.2 bg-stone-800 border border-stone-700 text-stone-300 rounded">Equal or Lower</span>
+            </div>
+
+            <button id="btnPickUpPile" class="hidden mt-1 sm:mt-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white rounded-lg text-xs font-bold shadow-lg transition active:scale-95 border border-red-400/40">
+              <i class="fa-solid fa-hand-holding-hand mr-1"></i> Pick Up Pile
+            </button>
+          </div>
+
+          <!-- Swoop Cleared Cards Bin -->
+          <div class="flex flex-col items-center">
+            <div id="swoopBin" class="w-14 h-20 sm:w-20 sm:h-28 rounded-lg border-2 border-stone-700/60 bg-stone-900/30 shadow-inner flex flex-col items-center justify-center relative overflow-hidden">
+              <i class="fa-solid fa-fire-flame-curved text-amber-500/40 text-2xl"></i>
+              <span id="swoopedTotalCount" class="text-[10px] font-mono font-bold text-stone-400 mt-1">0</span>
+            </div>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-500/80 mt-1">Swooped</span>
+          </div>
         </div>
 
-        <div class="flex flex-col items-center">
-          <div id="swoopBin" class="w-14 h-20 sm:w-20 sm:h-28 rounded-lg border-2 border-stone-700/60 bg-stone-900/30 shadow-inner flex flex-col items-center justify-center relative overflow-hidden">
-            <i class="fa-solid fa-fire-flame-curved text-amber-500/40 text-2xl"></i>
-            <span id="swoopedTotalCount" class="text-[10px] font-mono font-bold text-stone-400 mt-1">0</span>
-          </div>
-          <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-500/80 mt-1">Swooped</span>
-        </div>
       </div>
 
       <div class="z-20 bg-stone-950/95 border-t border-stone-800 px-3 sm:px-4 py-2 flex flex-col gap-1.5">
@@ -368,7 +384,7 @@
       </div>
     </div>
 
-    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex-col overflow-hidden">
+    <div id="activityDrawer" class="hidden absolute top-14 right-4 z-40 w-80 max-h-96 bg-stone-900/95 border border-stone-700 rounded-2xl shadow-2xl backdrop-blur-md flex flex-col overflow-hidden">
       <div class="px-4 py-2.5 bg-stone-800/80 border-b border-stone-700 flex items-center justify-between">
         <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
           <i class="fa-solid fa-scroll"></i> Table Activity Log
@@ -447,20 +463,21 @@
           <tbody id="scoresTableBody" class="divide-y divide-stone-800 text-stone-200"></tbody>
         </table>
       </div>
+      
+      <!-- Summary Block with Host Guard -->
       <div id="roundSummaryBlock" class="hidden bg-stone-800/60 p-4 rounded-xl border border-amber-500/30 mb-4">
         <h4 id="roundWinnerHeadline" class="font-bold text-amber-300 text-base mb-1">Round Ended!</h4>
-        <p id="roundWinnerDesc" class="text-xs text-stone-300">Winner has cleared all table cards.</p>
-        <button id="btnNextRound" class="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-bold text-xs uppercase tracking-wider rounded-lg transition">
+        <p id="roundWinnerDesc" class="text-xs text-stone-300 mb-2">Winner has cleared all table cards.</p>
+        
+        <!-- Only Host Can Click -->
+        <button id="btnNextRound" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-bold text-xs uppercase tracking-wider rounded-lg transition">
           Deal Next Round
         </button>
+        <!-- Non-hosts see this message -->
+        <p id="guestWaitingMessage" class="hidden text-xs text-stone-400 italic text-center py-2">
+          <i class="fa-solid fa-hourglass-half text-amber-400 animate-spin mr-1"></i> Waiting for host to deal next round...
+        </p>
       </div>
-    </div>
-  </div>
-
-  <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-4">
-    <div id="toastInner" class="bg-stone-900 border border-amber-500/50 shadow-2xl px-5 py-2.5 rounded-full text-xs font-bold text-amber-300 flex items-center gap-2">
-      <i id="toastIcon" class="fa-solid fa-circle-info"></i>
-      <span id="toastMsg">Notification</span>
     </div>
   </div>
 
@@ -704,6 +721,8 @@
     const elRoundSummaryBlock = document.getElementById('roundSummaryBlock');
     const elRoundWinnerHeadline = document.getElementById('roundWinnerHeadline');
     const elRoundWinnerDesc = document.getElementById('roundWinnerDesc');
+    const elBtnNextRound = document.getElementById('btnNextRound');
+    const elGuestWaitingMessage = document.getElementById('guestWaitingMessage');
 
     const elBtnToggleAutoSort = document.getElementById('btnToggleAutoSort');
     const elAutoSortIcon = document.getElementById('autoSortIcon');
@@ -714,18 +733,23 @@
     const elBtnTogglePinSwoops = document.getElementById('btnTogglePinSwoops');
     const elPinSwoopsText = document.getElementById('pinSwoopsText');
 
+    let toastTimer = null;
     function showToast(msg, icon = 'fa-circle-info') {
       const toast = document.getElementById('toastNotification');
       const toastMsg = document.getElementById('toastMsg');
       const toastIcon = document.getElementById('toastIcon');
       if (!toast) return;
+
+      if (toastTimer) clearTimeout(toastTimer);
+
       toastMsg.innerText = msg;
       toastIcon.className = `fa-solid ${icon}`;
-      toast.classList.remove('opacity-0', 'translate-y-4');
+      toast.classList.remove('opacity-0', '-translate-y-2');
       toast.classList.add('opacity-100', 'translate-y-0');
-      setTimeout(() => {
+
+      toastTimer = setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
-        toast.classList.add('opacity-0', 'translate-y-4');
+        toast.classList.add('opacity-0', '-translate-y-2');
       }, 2500);
     }
 
@@ -780,7 +804,7 @@
           if (card) {
             player.tableMystery[action.slotIndex] = null;
             const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
-            // RULE: Must be equal or LOWER, or a Swoop (10/Joker)
+            // RULE: Equal or LOWER (or 10/Joker)
             const isValid = !topCard || card.isSwoop || topCard.isJoker || (card.rankValue <= topCard.rankValue);
             if (isValid) {
               executePlayCards(player, [card]);
@@ -966,8 +990,19 @@
       renderLocalPlayerCards();
       renderTurnIndicator();
       renderScoreboard();
+
+      // Broadcasted Scoreboard Handling for All Users
+      if (gameState.status === 'round_ended' || gameState.status === 'game_over') {
+        elScoresModal.classList.remove('hidden');
+        elRoundSummaryBlock.classList.remove('hidden');
+        renderScoreboardEndState();
+      } else {
+        elScoresModal.classList.add('hidden');
+        elRoundSummaryBlock.classList.add('hidden');
+      }
     }
 
+    // Displays the active pile and counts consecutive matching ranks on top
     function renderCenterPile() {
       const topCard = gameState.playPile.length > 0 ? gameState.playPile[gameState.playPile.length - 1] : null;
       elActivePileCardArea.innerHTML = '';
@@ -982,12 +1017,37 @@
         elEmptyPileIndicator.classList.add('hidden');
         elPileCountBadge.innerText = `${gameState.playPile.length} cards`;
 
+        // Calculate consecutive matching cards of the exact same rank from top
+        let consecutiveMatchCount = 0;
+        for (let i = gameState.playPile.length - 1; i >= 0; i--) {
+          if (gameState.playPile[i].rankValue === topCard.rankValue && !gameState.playPile[i].isJoker) {
+            consecutiveMatchCount++;
+          } else {
+            break;
+          }
+        }
+
         const cardElem = createCardDOM(topCard, false, false);
         cardElem.classList.add('shadow-2xl');
+
+        // Badge showing how many duplicate ranks are stacked on top
+        if (consecutiveMatchCount > 1) {
+          const matchBadge = document.createElement('div');
+          matchBadge.className = 'absolute -top-2.5 -right-2.5 z-40 bg-amber-400 text-stone-950 text-[11px] font-black px-2 py-0.5 rounded-full border border-stone-900 shadow-glow-gold flex items-center gap-1';
+          matchBadge.innerHTML = `<span>${consecutiveMatchCount}x</span>`;
+          cardElem.appendChild(matchBadge);
+        }
+
         elActivePileCardArea.appendChild(cardElem);
 
-        // RULE DISPLAY: Equal or Lower
-        elPileRuleBadge.innerText = topCard.isJoker ? 'Joker Played (Any Rank)' : `Equal or ≤ ${topCard.rankLabel}`;
+        // Pile rule label with count indication
+        if (topCard.isJoker) {
+          elPileRuleBadge.innerText = 'Joker Played (Any Rank)';
+        } else if (consecutiveMatchCount > 1) {
+          elPileRuleBadge.innerText = `Equal or ≤ ${topCard.rankLabel} (${consecutiveMatchCount} of 4 to Swoop!)`;
+        } else {
+          elPileRuleBadge.innerText = `Equal or ≤ ${topCard.rankLabel}`;
+        }
 
         const currentPlayer = gameState.players[gameState.turnIndex];
         const isMyTurn = currentPlayer && currentPlayer.id === localUserId;
@@ -1325,24 +1385,39 @@
 
         if (anyPlayerExceededLimit) {
           gameState.status = 'game_over';
-          const matchChampion = [...gameState.players].sort((a, b) => a.penaltyScore - b.penaltyScore)[0];
-          elRoundWinnerHeadline.innerText = `👑 MATCH OVER! Champion: ${matchChampion.name}`;
-          elRoundWinnerDesc.innerText = `Target of ${gameState.targetScore} pts reached. ${matchChampion.name} won with lowest penalty (${matchChampion.penaltyScore} pts)!`;
-          document.getElementById('btnNextRound').innerText = 'Start Fresh Match';
-        } else {
-          elRoundWinnerHeadline.innerText = `🎉 ${player.name} Wins Round ${gameState.roundNumber}!`;
-          elRoundWinnerDesc.innerText = 'Cleared all cards. Other players received penalty points based on remaining cards.';
-          document.getElementById('btnNextRound').innerText = 'Deal Next Round';
         }
 
-        elRoundSummaryBlock.classList.remove('hidden');
-        elScoresModal.classList.remove('hidden');
-        renderScoreboard();
         updateEntireUI();
         broadcastState();
         return true;
       }
       return false;
+    }
+
+    // Renders scoreboard modal with Host controls vs Guest waiting state
+    function renderScoreboardEndState() {
+      const amHost = gameState.hostId === localUserId;
+
+      if (gameState.status === 'game_over') {
+        const matchChampion = [...gameState.players].sort((a, b) => a.penaltyScore - b.penaltyScore)[0];
+        elRoundWinnerHeadline.innerText = `👑 MATCH OVER! Champion: ${matchChampion.name}`;
+        elRoundWinnerDesc.innerText = `Target of ${gameState.targetScore} pts reached. ${matchChampion.name} won with lowest penalty (${matchChampion.penaltyScore} pts)!`;
+        elBtnNextRound.innerText = 'Start Fresh Match';
+      } else {
+        const lastWinner = gameState.players.find(p => !p.hand?.length && !p.tableFaceUp?.some(Boolean) && !p.tableMystery?.some(Boolean));
+        const winnerName = lastWinner ? lastWinner.name : 'A Player';
+        elRoundWinnerHeadline.innerText = `🎉 ${winnerName} Wins Round ${gameState.roundNumber}!`;
+        elRoundWinnerDesc.innerText = 'Cleared all cards. Other players received penalty points based on remaining cards.';
+        elBtnNextRound.innerText = 'Deal Next Round';
+      }
+
+      if (amHost) {
+        elBtnNextRound.classList.remove('hidden');
+        elGuestWaitingMessage.classList.add('hidden');
+      } else {
+        elBtnNextRound.classList.add('hidden');
+        elGuestWaitingMessage.classList.remove('hidden');
+      }
     }
 
     function triggerAiIfTurn() {
@@ -1729,7 +1804,7 @@
     document.getElementById('btnToggleLog').addEventListener('click', () => elActivityDrawer.classList.toggle('hidden'));
     document.getElementById('btnCloseLog').addEventListener('click', () => elActivityDrawer.classList.add('hidden'));
 
-    document.getElementById('btnNextRound').addEventListener('click', () => {
+    elBtnNextRound.addEventListener('click', () => {
       if (!isHost) return;
       elScoresModal.classList.add('hidden');
       elRoundSummaryBlock.classList.add('hidden');

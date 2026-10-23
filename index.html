@@ -1076,8 +1076,6 @@
 
         if (topCard.isJoker) {
           elPileRuleBadge.innerText = 'Joker Played (Any Rank)';
-        } else if (consecutiveMatchCount > 1) {
-          elPileRuleBadge.innerText = `Equal or ≤ ${topCard.rankLabel} (${consecutiveMatchCount} of 4 to Swoop!)`;
         } else {
           elPileRuleBadge.innerText = `Equal or ≤ ${topCard.rankLabel}`;
         }
